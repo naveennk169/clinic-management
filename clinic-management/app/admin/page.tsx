@@ -335,7 +335,7 @@ function AdminDashboardContent() {
 
   const filteredAppointments = appointments.filter(
     (apt) =>
-      apt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      // apt.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.phone.includes(searchTerm),
   )

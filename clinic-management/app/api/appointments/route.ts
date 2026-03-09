@@ -5,7 +5,12 @@ export async function GET() {
     const appointmentsFromDb = await prisma.appointment.findMany({
       orderBy: { createdAt: "desc" },
     })
-    return NextResponse.json({ success: true, appointments: appointmentsFromDb })
+    const mapped = appointmentsFromDb.map(apt => ({
+      ...apt,
+      date: apt.preferredDate || "",
+      time: apt.preferredTime || "",
+    }))
+    return NextResponse.json({ success: true, appointments: mapped })
   } catch (error) {
     console.error("Error fetching appointments:", error)
     return NextResponse.json({ success: false, message: "Failed to fetch appointments" }, { status: 500 })
@@ -16,15 +21,47 @@ export async function POST(request: NextRequest) {
   try {
     const appointmentData = await request.json()
 
-    // First find the patient to link to
-    const patientRecord = await prisma.patient.findUnique({
-      where: { patientId: appointmentData.patientId }
-    })
+    let patientId = appointmentData.patientId
+    let dbPatient = null
+
+    if (patientId) {
+      dbPatient = await prisma.patient.findUnique({
+        where: { patientId }
+      })
+    } else if (appointmentData.email) {
+      // It's a public booking, try to find patient by email
+      dbPatient = await prisma.patient.findUnique({
+        where: { email: appointmentData.email }
+      })
+      if (!dbPatient) {
+        patientId = `HC${Math.floor(1000 + Math.random() * 9000)}`
+        dbPatient = await prisma.patient.create({
+          data: {
+             patientId,
+             name: appointmentData.patientName || appointmentData.name || "Unknown",
+             email: appointmentData.email,
+             phone: appointmentData.phone,
+          }
+        })
+      } else {
+        patientId = dbPatient.patientId
+      }
+    } else {
+        patientId = `HC${Math.floor(1000 + Math.random() * 9000)}`
+        dbPatient = await prisma.patient.create({
+          data: {
+             patientId,
+             name: appointmentData.patientName || appointmentData.name || "Unknown",
+             email: `guest-${patientId}@example.com`,
+             phone: appointmentData.phone,
+          }
+        })
+    }
 
     const newAppointment = await prisma.appointment.create({
       data: {
-        patientId: appointmentData.patientId,
-        patientName: appointmentData.patientName,
+        patientId: patientId,
+        patientName: dbPatient?.name || appointmentData.patientName || appointmentData.name || "Unknown",
         email: appointmentData.email,
         phone: appointmentData.phone,
         age: appointmentData.age,
@@ -42,17 +79,24 @@ export async function POST(request: NextRequest) {
         chronicConditions: appointmentData.chronicConditions || [],
         symptoms: appointmentData.symptoms,
         appointmentReason: appointmentData.appointmentReason,
-        preferredDate: appointmentData.preferredDate,
-        preferredTime: appointmentData.preferredTime,
-        additionalNotes: appointmentData.additionalNotes,
+        preferredDate: appointmentData.date || appointmentData.preferredDate,
+        preferredTime: appointmentData.time || appointmentData.preferredTime,
+        additionalNotes: appointmentData.additionalNotes || appointmentData.notes,
         type: appointmentData.type || "consultation",
         status: "pending",
       }
     })
 
-    return NextResponse.json({ success: true, appointment: newAppointment })
+    const mappedAppointment = {
+      ...newAppointment,
+      date: newAppointment.preferredDate || "",
+      time: newAppointment.preferredTime || ""
+    }
+
+    return NextResponse.json({ success: true, appointment: mappedAppointment })
   } catch (error) {
     console.error("Error creating appointment:", error)
     return NextResponse.json({ success: false, message: "Failed to create appointment" }, { status: 500 })
   }
 }
+
