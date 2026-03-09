@@ -1,41 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-// Mock database for sessions
-const sessions: any[] = [
-  {
-    id: 1,
-    patientId: "P001",
-    sessionNumber: 1,
-    date: "2024-01-20",
-    type: "physical-therapy",
-    notes: "Initial assessment completed. Patient showed good range of motion.",
-    workoutPlan: "Basic stretching exercises, 15 minutes daily",
-    completedAt: "2024-01-20T10:30:00Z",
-    status: "completed",
-  },
-  {
-    id: 2,
-    patientId: "P001",
-    sessionNumber: 2,
-    date: "2024-01-25",
-    type: "physical-therapy",
-    notes: "Improvement in flexibility. Added core strengthening exercises.",
-    workoutPlan: "Core strengthening routine, 20 minutes daily",
-    completedAt: "2024-01-25T11:00:00Z",
-    status: "completed",
-  },
-  {
-    id: 3,
-    patientId: "P002",
-    sessionNumber: 1,
-    date: "2024-01-22",
-    type: "rehabilitation",
-    notes: "Knee mobility assessment. Started gentle range of motion exercises.",
-    workoutPlan: "Gentle knee exercises, 10 minutes twice daily",
-    completedAt: "2024-01-22T14:30:00Z",
-    status: "completed",
-  },
-]
+import { prisma } from "@/lib/prisma"
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,11 +8,17 @@ export async function GET(request: NextRequest) {
     const patientId = searchParams.get("patientId")
 
     if (patientId) {
-      const patientSessions = sessions.filter((session) => session.patientId === patientId)
+      const patientSessions = await prisma.session.findMany({
+        where: { patientId },
+        orderBy: { date: "desc" }
+      })
       return NextResponse.json({ success: true, sessions: patientSessions })
     }
 
-    return NextResponse.json({ success: true, sessions })
+    const allSessions = await prisma.session.findMany({
+      orderBy: { date: "desc" }
+    })
+    return NextResponse.json({ success: true, sessions: allSessions })
   } catch (error) {
     console.error("Error fetching sessions:", error)
     return NextResponse.json({ success: false, message: "Failed to fetch sessions" }, { status: 500 })
@@ -58,19 +29,38 @@ export async function POST(request: NextRequest) {
   try {
     const sessionData = await request.json()
 
-    const newSession = {
-      id: sessions.length + 1,
-      ...sessionData,
-      completedAt: new Date().toISOString(),
-      status: "completed",
+    // Verify patient exists
+    const patientRecord = await prisma.patient.findUnique({
+      where: { patientId: sessionData.patientId }
+    })
+
+    if (!patientRecord) {
+      return NextResponse.json({ success: false, message: "Patient not found" }, { status: 404 })
     }
 
-    // In production, this would save to Google Sheets
-    sessions.push(newSession)
+    const newSession = await prisma.session.create({
+      data: {
+        patientId: sessionData.patientId,
+        sessionNumber: sessionData.sessionNumber || (patientRecord.completedSessions + 1),
+        date: sessionData.date || new Date().toISOString(),
+        type: sessionData.type,
+        notes: sessionData.notes,
+        workoutPlan: sessionData.workoutPlan,
+        status: "completed",
+      }
+    })
 
     // Update patient's completed sessions count
-    // This would also be done in Google Sheets in production
-    console.log(`Session recorded for patient ${sessionData.patientId}`)
+    await prisma.patient.update({
+      where: { patientId: sessionData.patientId },
+      data: {
+        completedSessions: {
+          increment: 1
+        }
+      }
+    })
+
+    console.log(`Session recorded for patient ${sessionData.patientId} in MongoDB`)
 
     return NextResponse.json({ success: true, session: newSession })
   } catch (error) {

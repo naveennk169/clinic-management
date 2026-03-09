@@ -1,13 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { patients } from "@/lib/mock-data"
-import { googleSheetsService } from "@/lib/google-sheets" // added import
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   try {
-    console.log("[v0] GET /api/patients - Current patients count:", patients.length)
-    // Return patients without passwords
-    const patientsWithoutPasswords = patients.map(({ password, ...patient }) => patient)
-    return NextResponse.json({ success: true, patients: patientsWithoutPasswords })
+    const patientsFromDb = await prisma.patient.findMany({
+      orderBy: { createdAt: "desc" },
+    })
+    return NextResponse.json({ success: true, patients: patientsFromDb })
   } catch (error) {
     console.error("Error fetching patients:", error)
     return NextResponse.json({ success: false, message: "Failed to fetch patients" }, { status: 500 })
@@ -33,38 +32,44 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Creating new patient:", newPatient)
 
-    // In production, this would save to Google Sheets
-    patients.push(newPatient)
-
-    // Build a shape that matches the Google Sheets patient row
-    const sheetPatient = {
-      patientId: newPatient.patientId,
-      name: newPatient.name,
-      email: newPatient.email,
-      phone: newPatient.phone || "",
-      password: newPatient.password || "",
-      totalSessions: newPatient.totalSessions || 0,
-      completedSessions: newPatient.completedSessions || 0,
-      therapyDetails: newPatient.therapyDetails || "",
-      createdAt: newPatient.createdAt,
-      status: newPatient.status,
-    }
-
-    let sheetStored = false
-    try {
-      sheetStored = await googleSheetsService.storePatientCredentials(sheetPatient)
-      if (!sheetStored) {
-        console.error("[v0] Google Sheets: storePatientCredentials returned false")
-      } else {
-        console.log("[v0] Patient stored in Google Sheets")
+    // We generate a unique patientId 
+    const count = await prisma.patient.count()
+    const patientIdStr = `HC${String(count + 1).padStart(3, "0")}`
+    
+    // Hash password in production, here storing plaintext based on original code
+    // Create patient first 
+    const savedPatient = await prisma.patient.create({
+      data: {
+        patientId: patientIdStr,
+        name: newPatient.name,
+        email: newPatient.email,
+        phone: newPatient.phone,
+        therapyDetails: newPatient.therapyDetails,
+        totalSessions: newPatient.totalSessions || 0,
+        completedSessions: 0,
+        status: "active",
+        paidAmount: newPatient.paidAmount || 0,
+        sessionCost: newPatient.sessionCost || 0,
+        paymentType: newPatient.paymentType || "advance",
+        balance: newPatient.balance || 0,
+        nextSessionDate: newPatient.nextSessionDate || "",
       }
-    } catch (e) {
-      console.error("[v0] Error storing patient to Google Sheets:", e)
-    }
+    })
 
-    // Return patient without password
-    const { password, ...patientResponse } = newPatient
-    return NextResponse.json({ success: true, patient: patientResponse, sheetStored })
+    // Also create User credentials for auth
+    await prisma.user.create({
+      data: {
+        email: newPatient.email,
+        password: newPatient.password, // IMPORTANT: Should hash this eventually
+        name: newPatient.name,
+        role: "PATIENT",
+        patientId: patientIdStr,
+      }
+    })
+
+    console.log("[v0] Patient created in MongoDB via Prisma:", savedPatient.id)
+
+    return NextResponse.json({ success: true, patient: savedPatient })
   } catch (error) {
     console.error("Error creating patient:", error)
     return NextResponse.json({ success: false, message: "Failed to create patient" }, { status: 500 })

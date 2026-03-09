@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String   // Hashed password
+  name      String
+  role      Role     @default(PATIENT)
+  patientId String?  // Reference to Patient record if role is PATIENT
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  PATIENT
+}
+
+model Patient {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  patientId          String   @unique // Custom ID like HC001
+  name               String
+  email              String   @unique
+  phone              String?
+  totalSessions      Int      @default(0)
+  completedSessions  Int      @default(0)
+  therapyDetails     String?
+  paidAmount         Float?   @default(0)
+  sessionCost        Float?   @default(0)
+  paymentType        String?  @default("advance")
+  balance            Float?   @default(0)
+  nextSessionDate    String?
+  status             String   @default("active") // active, inactive
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  appointments       Appointment[]
+  sessions           Session[]
+}
+
+model Appointment {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  patientId          String   // References Patient.patientId
+  patientName        String
+
+  // Details
+  email              String?
+  phone              String?
+  age                String?
+  gender             String?
+  address            String?
+  emergencyContact   String?
+  emergencyPhone     String?
+  medicalHistory     String?
+  currentMedications String?
+  allergies          String?
+  previousSurgeries  String?
+  smokingStatus      String?
+  alcoholConsumption String?
+  exerciseFrequency  String?
+  chronicConditions  String[]
+  symptoms           String?
+  appointmentReason  String?
+  preferredDate      String?
+  preferredTime      String?
+  additionalNotes    String?
+  
+  type               String?  // consultation, therapy, follow-up
+  status             String   @default("pending") // pending, scheduled, completed, cancelled, no-show
+  
+  submittedAt        DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  patient            Patient? @relation(fields: [patientId], references: [patientId])
+}
+
+model Session {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  patientId     String   // References Patient.patientId
+  sessionNumber Int
+  date          String
+  type          String?
+  notes         String?
+  workoutPlan   String?
+  status        String   @default("completed")
+  completedAt   DateTime @default(now())
+
+  patient       Patient? @relation(fields: [patientId], references: [patientId])
+}

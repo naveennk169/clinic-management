@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { patients } from "@/lib/mock-data"
+import { prisma } from "@/lib/prisma"
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -8,24 +8,26 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     console.log("[v0] Updating patient details:", { patientId, updateData })
 
-    const patientIndex = patients.findIndex((p) => p.patientId === patientId)
+    const existingPatient = await prisma.patient.findUnique({
+      where: { patientId }
+    })
 
-    if (patientIndex === -1) {
+    if (!existingPatient) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 })
     }
 
-    // Update patient with new details
-    patients[patientIndex] = {
-      ...patients[patientIndex],
-      ...updateData,
-      updatedAt: new Date().toISOString(),
-    }
+    // Since updateData could contain string properties that need parsing, we just spread it directly
+    // Assuming matching properties map directly to Prisma schema
+    const updatedPatient = await prisma.patient.update({
+      where: { patientId },
+      data: updateData
+    })
 
-    console.log("[v0] Patient updated successfully:", patients[patientIndex])
+    console.log("[v0] Patient updated successfully:", updatedPatient)
 
     return NextResponse.json({
       message: "Patient details updated successfully",
-      patient: patients[patientIndex],
+      patient: updatedPatient,
     })
   } catch (error) {
     console.error("[v0] Error updating patient details:", error)

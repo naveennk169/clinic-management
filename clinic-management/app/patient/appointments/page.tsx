@@ -51,14 +51,15 @@ function AppointmentsPageContent() {
   useEffect(() => {
     if (selectedDate) {
       const dateStr = selectedDate.toISOString().split("T")[0]
-      const slots = appointmentService.getAvailableSlots(dateStr)
-      setAvailableSlots(slots)
+      appointmentService.getAvailableSlots(dateStr).then(slots => {
+        setAvailableSlots(slots)
+      })
     }
   }, [selectedDate])
 
-  const loadAppointments = () => {
+  const loadAppointments = async () => {
     if (user?.patientId) {
-      const userAppointments = appointmentService.getPatientAppointments(user.patientId)
+      const userAppointments = await appointmentService.getPatientAppointments(user.patientId)
       setAppointments(userAppointments)
     }
   }

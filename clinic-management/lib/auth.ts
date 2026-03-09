@@ -15,85 +15,48 @@ export interface AuthState {
   isAuthenticated: boolean
 }
 
-// Mock user database (in production, this would be a real database)
-const mockUsers = {
-  patients: [
-    {
-      id: "1",
-      patientId: "HC001",
-      password: "patient123",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      role: "patient" as const,
-    },
-    {
-      id: "2",
-      patientId: "HC002",
-      password: "patient456",
-      name: "Robert Brown",
-      email: "robert@example.com",
-      role: "patient" as const,
-    },
-  ],
-  admins: [
-    {
-      id: "admin1",
-      username: "admin",
-      password: "admin123",
-      name: "Dr. Admin",
-      email: "admin@clinic.com",
-      role: "admin" as const,
-    },
-  ],
-}
+import { prisma } from "./prisma"
 
+// In a real application, you'd use iron-session or next-auth.
+// Here we simulate checking DB since we don't have a real edge/session middleware.
 export const authService = {
-  // Patient login
+  // Patient login (Simulate fetching via a server action or API)
   loginPatient: async (patientId: string, password: string): Promise<User | null> => {
-    await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate API call
+    try {
+      // In a real App Router app with "use client", you'd fetch an API route. 
+      // We will create an /api/auth route to handle this securely.
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "patient", patientId, password })
+      })
+      const data = await res.json()
 
-    const patient = mockUsers.patients.find((p) => p.patientId === patientId && p.password === password)
-
-    if (patient) {
-      const user: User = {
-        id: patient.id,
-        name: patient.name,
-        email: patient.email,
-        role: patient.role,
-        patientId: patient.patientId,
+      if (data.success && data.user) {
+        localStorage.setItem("auth_user", JSON.stringify(data.user))
+        localStorage.setItem("auth_token", `patient_${data.user.id}`)
+        return data.user
       }
-
-      // Store in localStorage (in production, use secure tokens)
-      localStorage.setItem("auth_user", JSON.stringify(user))
-      localStorage.setItem("auth_token", `patient_${patient.id}`)
-
-      return user
-    }
-
+    } catch(e) { console.error(e) }
     return null
   },
 
   // Admin login
   loginAdmin: async (username: string, password: string): Promise<User | null> => {
-    await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate API call
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "admin", username, password })
+      })
+      const data = await res.json()
 
-    const admin = mockUsers.admins.find((a) => a.username === username && a.password === password)
-
-    if (admin) {
-      const user: User = {
-        id: admin.id,
-        name: admin.name,
-        email: admin.email,
-        role: admin.role,
+      if (data.success && data.user) {
+        localStorage.setItem("auth_user", JSON.stringify(data.user))
+        localStorage.setItem("auth_token", `admin_${data.user.id}`)
+        return data.user
       }
-
-      // Store in localStorage (in production, use secure tokens)
-      localStorage.setItem("auth_user", JSON.stringify(user))
-      localStorage.setItem("auth_token", `admin_${admin.id}`)
-
-      return user
-    }
-
+    } catch(e) { console.error(e) }
     return null
   },
 
