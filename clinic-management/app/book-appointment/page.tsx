@@ -112,7 +112,7 @@ export default function BookAppointmentPage() {
             </div>
             <CardTitle className="text-2xl">Appointment Request Submitted</CardTitle>
             <CardDescription className="text-base">
-              Thank you for choosing MediCare Clinic. We have received your appointment request.
+              Thank you for choosing Surya's Speech and Language Clinic. We have received your appointment request.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -148,8 +148,8 @@ export default function BookAppointmentPage() {
                 <Heart className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">MediCare Clinic</h1>
-                <p className="text-xs text-muted-foreground">Professional Healthcare</p>
+                <h1 className="text-xl font-bold text-foreground">Surya's Speech and Language Clinic</h1>
+                <p className="text-xs text-muted-foreground">Children and Adults</p>
               </div>
             </Link>
             <Link href="/">

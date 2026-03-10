@@ -83,7 +83,7 @@ export default function PatientLoginPage() {
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
                 <Heart className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="font-semibold">MediCare Clinic</span>
+              <span className="font-semibold">Surya's Speech and Language Clinic</span>
             </div>
           </div>
         </div>

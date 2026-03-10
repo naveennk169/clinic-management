@@ -31,14 +31,21 @@ import {
   DollarSign,
   CreditCard,
   Edit,
+  Trash2,
+  Menu,
+  X,
+  Plus,
+  Activity,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/protected-route"
+import Link from "next/link"
 
 interface AppointmentData {
-  name: string
+  id?: string
+  patientName: string
   email: string
   phone: string
   age: string
@@ -92,12 +99,12 @@ function AdminDashboardContent() {
   const [isLoading, setIsLoading] = useState(true)
 
   const [totalSessions, setTotalSessions] = useState("")
+  const [completedSessions, setCompletedSessions] = useState("")
   const [therapyDetails, setTherapyDetails] = useState("")
   const [paidAmount, setPaidAmount] = useState("")
   const [sessionCost, setSessionCost] = useState("")
   const [paymentType, setPaymentType] = useState<"advance" | "per-session">("advance")
   const [nextSessionDate, setNextSessionDate] = useState("")
-  const [userId, setUserId] = useState("")
   const [password, setPassword] = useState("")
 
   const { toast } = useToast()
@@ -146,22 +153,22 @@ function AdminDashboardContent() {
   }
 
   const handleApproveAppointment = async () => {
-    if (!selectedAppointment || !userId || !password) {
+    if (!selectedAppointment || !password) {
       toast({
         title: "Missing Information",
-        description: "Please enter both User ID and Password.",
+        description: "Please enter a Password.",
         variant: "destructive",
       })
       return
     }
 
     try {
-      const patientId = `P${Date.now().toString().slice(-6)}`
+      const patientId = `P${Math.floor(100 + Math.random() * 900)}`
 
       const patientData = {
         patientId,
-        userId, // Use admin-entered userId
-        name: selectedAppointment.name,
+        userId: patientId, // Auto-generated
+        name: selectedAppointment.patientName,
         email: selectedAppointment.email,
         phone: selectedAppointment.phone,
         password, // Use admin-entered password
@@ -183,6 +190,17 @@ function AdminDashboardContent() {
       })
 
       if (response.ok) {
+        // Also update the appointment status in the database to 'approved'
+        if (selectedAppointment.id) {
+          await fetch(`/api/appointments/${selectedAppointment.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: "approved" }),
+          }).catch(console.error)
+        }
+
         const updatedAppointments = appointments.map((apt) =>
           apt === selectedAppointment ? { ...apt, status: "approved" as const, isApproved: true } : apt,
         )
@@ -190,12 +208,11 @@ function AdminDashboardContent() {
 
         toast({
           title: "Patient Account Created",
-          description: `Patient ID: ${patientId} | User ID: ${userId} | Password: ${password}`,
+          description: `Patient ID (User ID): ${patientId} | Password: ${password}`,
           duration: 10000,
         })
 
         setSelectedAppointment(null)
-        setUserId("")
         setPassword("")
         loadData()
       } else {
@@ -232,6 +249,7 @@ function AdminDashboardContent() {
 
       const updateData = {
         totalSessions: Number.parseInt(totalSessions),
+        completedSessions: Number.parseInt(completedSessions || "0"),
         therapyDetails,
         paidAmount: Number.parseFloat(paidAmount || "0"),
         sessionCost: Number.parseFloat(sessionCost),
@@ -257,6 +275,7 @@ function AdminDashboardContent() {
         // Reset form and reload data
         setSelectedPatient(null)
         setTotalSessions("")
+        setCompletedSessions("")
         setTherapyDetails("")
         setPaidAmount("")
         setSessionCost("")
@@ -303,6 +322,33 @@ function AdminDashboardContent() {
     }
   }
 
+  const handleDeletePatient = async (patientId: string) => {
+    if (confirm("Are you sure you want to delete this patient and all their records?")) {
+      try {
+        const response = await fetch(`/api/patients/${patientId}`, {
+          method: "DELETE",
+        })
+        
+        if (response.ok) {
+          toast({
+            title: "Patient Deleted",
+            description: "Patient and all related records have been removed.",
+          })
+          loadData()
+        } else {
+          throw new Error("Failed to delete patient")
+        }
+      } catch (error) {
+        console.error("Error deleting patient:", error)
+        toast({
+          title: "Delete Failed",
+          description: "Unable to delete patient.",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
   const handleExportData = async (type: string) => {
     try {
       const response = await fetch(`/api/export?type=${type}`)
@@ -335,9 +381,10 @@ function AdminDashboardContent() {
 
   const filteredAppointments = appointments.filter(
     (apt) =>
-      // apt.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      apt.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      apt.phone.includes(searchTerm),
+      apt.status === "pending" &&
+      ((apt.patientName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+       (apt.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+       (apt.phone || "").includes(searchTerm)),
   )
 
   const filteredPatients = patients.filter(
@@ -350,7 +397,6 @@ function AdminDashboardContent() {
   const pendingAppointments = appointments.filter((apt) => apt.status === "pending")
   const activePatients = patients.filter((p) => p.status === "active")
   const totalRevenue = patients.reduce((sum, p) => sum + p.paidAmount, 0)
-  const totalBalance = patients.reduce((sum, p) => sum + p.balance, 0)
 
   if (isLoading) {
     return (
@@ -378,11 +424,11 @@ function AdminDashboardContent() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 bg-primary rounded-lg">
-                <Heart className="h-6 w-6 text-primary-foreground" />
+                <Activity className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">MediCare Clinic</h1>
-                <p className="text-xs text-muted-foreground">Admin Dashboard</p>
+                <h1 className="text-xl font-bold text-foreground">Surya's Speech and Language Clinic</h1>
+                <p className="text-xs text-muted-foreground">Admin Portal</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -398,7 +444,7 @@ function AdminDashboardContent() {
 
       {/* Stats Cards */}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-5 gap-6 mb-8">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Appointments</CardTitle>
@@ -440,17 +486,6 @@ function AdminDashboardContent() {
             <CardContent>
               <div className="text-2xl font-bold">₹{totalRevenue.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">Payments received</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Outstanding Balance</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₹{totalBalance.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">Amount pending</p>
             </CardContent>
           </Card>
         </div>
@@ -515,7 +550,7 @@ function AdminDashboardContent() {
                     <TableBody>
                       {filteredAppointments.map((appointment, index) => (
                         <TableRow key={index}>
-                          <TableCell className="font-medium">{appointment.name}</TableCell>
+                          <TableCell className="font-medium">{appointment.patientName}</TableCell>
                           <TableCell>
                             <div className="text-sm">
                               <div>{appointment.email}</div>
@@ -555,7 +590,7 @@ function AdminDashboardContent() {
                                       <div className="grid md:grid-cols-2 gap-4">
                                         <div>
                                           <Label className="text-sm font-medium">Name</Label>
-                                          <p className="text-sm">{appointment.name}</p>
+                                          <p className="text-sm">{appointment.patientName}</p>
                                         </div>
                                         <div>
                                           <Label className="text-sm font-medium">Age</Label>
@@ -692,19 +727,14 @@ function AdminDashboardContent() {
                                 <DialogContent className="max-w-md">
                                   <DialogHeader>
                                     <DialogTitle>Approve Patient & Assign Credentials</DialogTitle>
-                                    <DialogDescription>Create patient account for {appointment.name}</DialogDescription>
+                                    <DialogDescription>Create patient account for {appointment.patientName}</DialogDescription>
                                   </DialogHeader>
                                   <div className="space-y-4">
-                                    <div>
-                                      <Label htmlFor="userId">User ID</Label>
-                                      <Input
-                                        id="userId"
-                                        value={userId}
-                                        onChange={(e) => setUserId(e.target.value)}
-                                        placeholder="Enter User ID (e.g., USER123)"
-                                      />
+                                    <div className="bg-muted p-4 rounded-lg">
+                                      <p className="text-sm text-balance">
+                                        Patient ID / User ID will be auto-generated for logging in. Please assign a password below.
+                                      </p>
                                     </div>
-
                                     <div>
                                       <Label htmlFor="password">Password</Label>
                                       <Input
@@ -714,12 +744,6 @@ function AdminDashboardContent() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Enter password"
                                       />
-                                    </div>
-
-                                    <div className="bg-muted p-4 rounded-lg">
-                                      <p className="text-sm text-muted-foreground">
-                                        Patient ID will be auto-generated (e.g., P123456)
-                                      </p>
                                     </div>
 
                                     <Button onClick={handleApproveAppointment} className="w-full">
@@ -768,7 +792,6 @@ function AdminDashboardContent() {
                           <TableHead>Therapy</TableHead>
                           <TableHead>Total Sessions</TableHead>
                           <TableHead>Paid Amount</TableHead>
-                          <TableHead>Balance</TableHead>
                           <TableHead>Sessions Completed</TableHead>
                           <TableHead>Next Session Date</TableHead>
                           <TableHead>Actions</TableHead>
@@ -777,7 +800,11 @@ function AdminDashboardContent() {
                       <TableBody>
                         {filteredPatients.map((patient) => (
                           <TableRow key={patient.patientId}>
-                            <TableCell className="font-medium">{patient.patientId}</TableCell>
+                            <TableCell className="font-medium">
+                              <Link href={`/admin/patient/${patient.patientId}`} className="text-primary hover:underline">
+                                {patient.patientId}
+                              </Link>
+                            </TableCell>
                             <TableCell>{patient.name}</TableCell>
                             <TableCell>{patient.phone}</TableCell>
                             <TableCell className="max-w-[200px] truncate" title={patient.therapyDetails}>
@@ -785,34 +812,31 @@ function AdminDashboardContent() {
                             </TableCell>
                             <TableCell>{patient.totalSessions || 0}</TableCell>
                             <TableCell>₹{patient.paidAmount?.toFixed(2) || "0.00"}</TableCell>
-                            <TableCell>
-                              <Badge variant={patient.balance > 0 ? "destructive" : "default"}>
-                                ₹{patient.balance?.toFixed(2) || "0.00"}
-                              </Badge>
-                            </TableCell>
                             <TableCell>{patient.completedSessions}</TableCell>
                             <TableCell>{patient.nextSessionDate || "Not scheduled"}</TableCell>
                             <TableCell>
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setSelectedPatient(patient)
-                                      setTotalSessions(patient.totalSessions?.toString() || "")
-                                      setTherapyDetails(patient.therapyDetails || "")
-                                      setPaidAmount(patient.paidAmount?.toString() || "")
-                                      setSessionCost(patient.sessionCost?.toString() || "")
-                                      setPaymentType(patient.paymentType || "advance")
-                                      setNextSessionDate(patient.nextSessionDate || "")
-                                    }}
-                                  >
-                                    <Edit className="h-4 w-4 mr-1" />
-                                    Edit Details
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-2xl">
+                              <div className="flex space-x-2">
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setSelectedPatient(patient)
+                                        setTotalSessions(patient.totalSessions?.toString() || "")
+                                        setCompletedSessions(patient.completedSessions?.toString() || "0")
+                                        setTherapyDetails(patient.therapyDetails || "")
+                                        setPaidAmount(patient.paidAmount?.toString() || "")
+                                        setSessionCost(patient.sessionCost?.toString() || "")
+                                        setPaymentType(patient.paymentType || "advance")
+                                        setNextSessionDate(patient.nextSessionDate || "")
+                                      }}
+                                    >
+                                      <Edit className="h-4 w-4 mr-1" />
+                                      Edit Details
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
                                   <DialogHeader>
                                     <DialogTitle>Update Patient Details</DialogTitle>
                                     <DialogDescription>
@@ -831,6 +855,19 @@ function AdminDashboardContent() {
                                           placeholder="e.g., 10"
                                         />
                                       </div>
+                                      <div>
+                                        <Label htmlFor="completedSessions">Sessions Completed</Label>
+                                        <Input
+                                          id="completedSessions"
+                                          type="number"
+                                          value={completedSessions}
+                                          onChange={(e) => setCompletedSessions(e.target.value)}
+                                          placeholder="e.g., 2"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-4">
                                       <div>
                                         <Label htmlFor="sessionCost">Cost per Session (₹)</Label>
                                         <Input
@@ -900,7 +937,16 @@ function AdminDashboardContent() {
                                   </div>
                                 </DialogContent>
                               </Dialog>
-                            </TableCell>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeletePatient(patient.patientId)}
+                                title="Delete Patient"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                           </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

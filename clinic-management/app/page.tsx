@@ -15,8 +15,8 @@ export default function HomePage() {
                 <Heart className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">MediCare Clinic</h1>
-                <p className="text-xs text-muted-foreground">Professional Healthcare</p>
+                <h1 className="text-xl font-bold text-foreground">Surya's Speech and Language Clinic</h1>
+                <p className="text-xs text-muted-foreground">Children and Adults</p>
               </div>
             </div>
             <nav className="hidden md:flex items-center gap-8">
@@ -85,9 +85,9 @@ export default function HomePage() {
       {/* Services Section */}
       <section id="services" className="py-20 px-4">
         <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold mb-6 text-balance">Our Medical Services</h3>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto text-balance leading-relaxed">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h3 className="text-4xl font-bold mb-8 text-balance">Our Medical Services</h3>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto text-balance leading-relaxed">
               Comprehensive healthcare solutions tailored to your individual needs with state-of-the-art facilities.
             </p>
           </div>
@@ -185,7 +185,7 @@ export default function HomePage() {
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h3 className="text-4xl font-bold mb-8 text-balance">Why Choose MediCare Clinic?</h3>
+              <h3 className="text-4xl font-bold mb-8 text-balance">Why Choose Surya's Speech and Language Clinic?</h3>
               <div className="space-y-6">
                 <div className="flex gap-4">
                   <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
@@ -245,24 +245,27 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <Card className="text-center border-0 bg-card/50">
-              <CardHeader>
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="h-7 w-7 text-primary" />
-                </div>
-                <CardTitle>Location</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  123 Healthcare Avenue
-                  <br />
-                  Medical District
-                  <br />
-                  City, State 12345
-                </CardDescription>
-              </CardContent>
-            </Card>
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <a 
+              href="https://www.google.com/maps/place/Surya&#39;s+Speech+and+Language+Clinic+-+Children+and+Adults+(Parkinson&#39;s,+Stroke,+Stuttering+%26+neuro+related+conditions)/@13.0347684,80.1276889,17z/data=!3m1!4b1!4m6!3m5!1s0x3a5261500e3fbe2d:0x7fabdf682f5bfebe!8m2!3d13.0347684!4d80.1302638!16s%2Fg%2F11rscy3v8r?entry=ttu&g_ep=EgoyMDI2MDMwOC4wIKXMDSoASAFQAw%3D%3D" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block hover:opacity-80 transition-opacity"
+            >
+              <Card className="text-center border-0 bg-card/50 h-full">
+                <CardHeader>
+                  <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <MapPin className="h-7 w-7 text-primary" />
+                  </div>
+                  <CardTitle>Location</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base text-balance text-center">
+                    Surya's Speech and Language Clinic - Children and Adults
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </a>
 
             <Card className="text-center border-0 bg-card/50">
               <CardHeader>
@@ -272,30 +275,8 @@ export default function HomePage() {
                 <CardTitle>Phone</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-base">
-                  Emergency: (555) 911-HELP
-                  <br />
-                  Appointments: (555) 123-CARE
-                  <br />
-                  General: (555) 456-7890
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-0 bg-card/50">
-              <CardHeader>
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <Mail className="h-7 w-7 text-primary" />
-                </div>
-                <CardTitle>Email</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  info@medicareClinic.com
-                  <br />
-                  appointments@medicareClinic.com
-                  <br />
-                  support@medicareClinic.com
+                <CardDescription className="text-base text-balance text-center">
+                  9342949527
                 </CardDescription>
               </CardContent>
             </Card>
@@ -327,20 +308,20 @@ export default function HomePage() {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-primary rounded-lg">
-                <Heart className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h4 className="font-bold text-foreground">MediCare Clinic</h4>
-                <p className="text-sm text-muted-foreground">Professional Healthcare</p>
-              </div>
-            </div>
-          </div>
-          <div className="border-t mt-8 pt-8 text-center">
-            <p className="text-muted-foreground">© 2024 MediCare Clinic. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
-    </div>
-  )
+               <div className="flex items-center justify-center w-10 h-10 bg-primary rounded-lg">
+                 <Heart className="h-6 w-6 text-primary-foreground" />
+               </div>
+               <div>
+                 <h4 className="font-bold text-foreground">Surya's Speech and Language Clinic</h4>
+                 <p className="text-sm text-muted-foreground">Children and Adults</p>
+               </div>
+             </div>
+           </div>
+           <div className="border-t mt-8 pt-8 text-center">
+             <p className="text-muted-foreground">© 2024 Surya's Speech and Language Clinic. All rights reserved.</p>
+           </div>
+         </div>
+       </footer>
+     </div>
+   )
 }

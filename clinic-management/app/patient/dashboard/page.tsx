@@ -35,6 +35,7 @@ interface PatientData {
   paidAmount: number
   sessionCost: number
   paymentType: "advance" | "per-session"
+  paymentDate?: string
   balance: number
   nextSessionDate: string
 }
@@ -126,7 +127,7 @@ export default function PatientDashboard() {
                 <Heart className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">MediCare Clinic</h1>
+                <h1 className="text-xl font-bold text-foreground">Surya's Speech and Language Clinic</h1>
                 <p className="text-xs text-muted-foreground">Patient Portal</p>
               </div>
             </div>
@@ -197,6 +198,12 @@ export default function PatientDashboard() {
                   </p>
                 </div>
                 <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Payment Date</Label>
+                  <p>
+                    {patient.paymentDate ? patient.paymentDate : "No payment record"}
+                  </p>
+                </div>
+                <div>
                   <Label className="text-sm font-medium text-muted-foreground">Therapy Plan</Label>
                   <p className="text-sm leading-relaxed">{patient.therapyDetails || "No therapy details available"}</p>
                 </div>
@@ -210,7 +217,6 @@ export default function PatientDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{patient.totalSessions || 0}</div>
@@ -221,7 +227,6 @@ export default function PatientDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <Heart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{patient.completedSessions || 0}</div>
@@ -232,7 +237,6 @@ export default function PatientDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Remaining</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{remainingSessions}</div>
@@ -243,22 +247,10 @@ export default function PatientDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Amount Paid</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">₹{patient.paidAmount?.toFixed(2) || "0.00"}</div>
               <p className="text-xs text-muted-foreground">Total paid</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Balance</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₹{patient.balance?.toFixed(2) || "0.00"}</div>
-              <p className="text-xs text-muted-foreground">Amount due</p>
             </CardContent>
           </Card>
         </div>
@@ -281,91 +273,6 @@ export default function PatientDashboard() {
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Started: {new Date(patient.createdAt).toLocaleDateString()}</span>
                 <span>{remainingSessions} sessions remaining</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Payment Information */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Payment Information
-            </CardTitle>
-            <CardDescription>Session payments and balance details</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div
-                className={`p-4 rounded-lg border ${
-                  patient.balance > 0
-                    ? "bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800"
-                    : "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4
-                      className={`font-semibold ${
-                        patient.balance > 0
-                          ? "text-yellow-800 dark:text-yellow-200"
-                          : "text-green-800 dark:text-green-200"
-                      }`}
-                    >
-                      Payment Status
-                    </h4>
-                    <p
-                      className={`text-sm ${
-                        patient.balance > 0
-                          ? "text-yellow-600 dark:text-yellow-400"
-                          : "text-green-600 dark:text-green-400"
-                      }`}
-                    >
-                      {patient.paymentType === "advance"
-                        ? "All sessions have been paid in advance"
-                        : patient.balance > 0
-                          ? `Balance of ₹${patient.balance.toFixed(2)} remaining`
-                          : "All payments are up to date"}
-                    </p>
-                  </div>
-                  <Badge
-                    variant="secondary"
-                    className={
-                      patient.balance > 0
-                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                        : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    }
-                  >
-                    {patient.balance > 0 ? "Balance Due" : "Paid"}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">Payment Type</Label>
-                  <p className="text-lg font-semibold capitalize">
-                    {patient.paymentType?.replace("-", " ") || "Not set"}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">Cost per Session</Label>
-                  <p className="text-lg font-semibold">₹{patient.sessionCost?.toFixed(2) || "0.00"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">Total Treatment Cost</Label>
-                  <p className="text-lg font-semibold">₹{totalTreatmentCost.toFixed(2)}</p>
-                </div>
-              </div>
-
-              <div className="text-xs text-muted-foreground">
-                <p>
-                  {patient.paymentType === "advance"
-                    ? "Your payment was processed when your account was created. Each completed session is automatically deducted from your prepaid balance."
-                    : "Payment is due per session. Please ensure payment is made before or during each appointment."}{" "}
-                  Contact our clinic if you have any payment-related questions.
-                </p>
               </div>
             </div>
           </CardContent>

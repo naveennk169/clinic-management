@@ -32,15 +32,17 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Creating new patient:", newPatient)
 
-    // We generate a unique patientId 
-    const count = await prisma.patient.count()
-    const patientIdStr = `HC${String(count + 1).padStart(3, "0")}`
-    
-    // Hash password in production, here storing plaintext based on original code
-    // Create patient first 
-    const savedPatient = await prisma.patient.create({
-      data: {
-        patientId: patientIdStr,
+    // Upsert patient: if it already exists (e.g. from public booking), upgrade it.
+    const savedPatient = await prisma.patient.upsert({
+      where: { email: newPatient.email },
+      update: {
+        patientId: patientData.patientId,
+        name: newPatient.name,
+        phone: newPatient.phone,
+        status: "active",
+      },
+      create: {
+        patientId: patientData.patientId,
         name: newPatient.name,
         email: newPatient.email,
         phone: newPatient.phone,
@@ -56,18 +58,23 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Also create User credentials for auth
-    await prisma.user.create({
-      data: {
+    // Upsert User credentials for auth
+    await prisma.user.upsert({
+      where: { email: newPatient.email },
+      update: {
+        password: newPatient.password,
+        patientId: patientData.patientId,
+      },
+      create: {
         email: newPatient.email,
         password: newPatient.password, // IMPORTANT: Should hash this eventually
         name: newPatient.name,
         role: "PATIENT",
-        patientId: patientIdStr,
+        patientId: patientData.patientId,
       }
     })
 
-    console.log("[v0] Patient created in MongoDB via Prisma:", savedPatient.id)
+    console.log("[v0] Patient created/updated in MongoDB via Prisma:", savedPatient.id)
 
     return NextResponse.json({ success: true, patient: savedPatient })
   } catch (error) {

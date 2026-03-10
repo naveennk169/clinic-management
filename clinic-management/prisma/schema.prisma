@@ -35,6 +35,7 @@ model Patient {
   paidAmount         Float?   @default(0)
   sessionCost        Float?   @default(0)
   paymentType        String?  @default("advance")
+  paymentDate        String?
   balance            Float?   @default(0)
   nextSessionDate    String?
   status             String   @default("active") // active, inactive

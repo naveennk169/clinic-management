@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         where: { email: appointmentData.email }
       })
       if (!dbPatient) {
-        patientId = `HC${Math.floor(1000 + Math.random() * 9000)}`
+        patientId = `P${Math.floor(100 + Math.random() * 900)}`
         dbPatient = await prisma.patient.create({
           data: {
              patientId,
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         patientId = dbPatient.patientId
       }
     } else {
-        patientId = `HC${Math.floor(1000 + Math.random() * 9000)}`
+        patientId = `P${Math.floor(100 + Math.random() * 900)}`
         dbPatient = await prisma.patient.create({
           data: {
              patientId,

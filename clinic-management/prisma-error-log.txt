@@ -1,0 +1,9 @@
+
+Invalid `prisma.patient.create()` invocation in
+C:\Users\arunk\Desktop\booking\vibe-coding\clinic-management\test-prisma2.ts:8:26
+
+  5 async function main() {
+  6   try {
+  7     const patientId = 'HC_TEST_' + Date.now();
+→ 8     await prisma.patient.create(
+Raw query failed. Code: `unknown`. Message: `Kind: Server selection timeout: No available servers. Topology: { Type: ReplicaSetNoPrimary, Set Name: atlas-t8ndep-shard-0, Servers: [ { Address: ac-ryqsnqz-shard-00-00.s6dpz06.mongodb.net:27017, Type: Unknown, Error: Kind: I/O error: received fatal alert: InternalError, labels: {}, source: None }, { Address: ac-ryqsnqz-shard-00-01.s6dpz06.mongodb.net:27017, Type: Unknown, Error: Kind: I/O error: received fatal alert: InternalError, labels: {}, source: None }, { Address: ac-ryqsnqz-shard-00-02.s6dpz06.mongodb.net:27017, Type: Unknown, Error: Kind: I/O error: received fatal alert: InternalError, labels: {}, source: None } ] }, labels: {}, source: None`
